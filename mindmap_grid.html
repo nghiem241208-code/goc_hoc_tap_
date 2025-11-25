@@ -43,14 +43,14 @@
   <div class="container">
     <header>
       <div class="topbar-left">
-        <h1>Kho Sơ đồ tư duy — Lưới ô</h1>
-        <div style="color:var(--muted);font-size:13px">Mỗi ô: Ảnh + Ghi chú — Dữ liệu lưu cục bộ</div>
+        <h1>Kho Sơ đồ tư duy </h1>
+        <div style="color:var(--muted);font-size:13px">Mỗi ô: Ảnh + Ghi chú </div>
       </div>
       <div class="controls">
         <button id="add-box" class="btn-primary">➕ Thêm ô</button>
-        <button id="export-all" class="ghost">⬇ Xuất (JSON)</button>
+        <button id="export-all" class="ghost">⬇ Xuất</button>
         <label class="ghost" style="cursor:pointer;padding:7px 10px;border-radius:8px">
-          ⬆ Nhập (JSON)
+          ⬆ Nhập
           <input id="import-file" class="import-input" type="file" accept=".json">
         </label>
         <button id="clear-all" class="ghost">🗑 Xóa tất cả</button>
@@ -63,7 +63,6 @@
     </main>
 
     <footer>
-      Giao diện dựa trên file index gốc bạn gửi. Dữ liệu (ảnh dạng base64) được lưu vào localStorage.
     </footer>
   </div>
 
@@ -244,7 +243,7 @@
     r.onload = ev=>{
       try{
         const parsed = JSON.parse(ev.target.result);
-        if(!Array.isArray(parsed)) throw new Error("File JSON không hợp lệ");
+        if(!Array.isArray(parsed)) throw new Error("File không hợp lệ");
         localSave(parsed);
         renderAll();
         toast('Đã nhập dữ liệu');
