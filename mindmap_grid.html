@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lưu trữ Sơ đồ tư duy — Lưới ô</title>
+<style>
+  :root{
+    --bg:#0e1726; --card:#1a2333; --accent:#00b4d8; --accent2:#ff9f43;
+    --text:#e6eef8; --muted:#b7c8e1;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter, "Poppins", sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:28px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+  header h1{font-size:1.3rem;color:var(--accent)}
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  button, .filebtn{background:var(--accent2);border:none;color:#08111a;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
+  .ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px}
+  .container{max-width:1200px;margin:0 auto}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+  .box{
+    background:var(--card);border-radius:14px;padding:12px;position:relative;min-height:220px;
+    display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5)
+  }
+  .box .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .thumb{height:120px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .thumb img{max-width:100%;max-height:100%;object-fit:contain}
+  .note{flex:1;min-height:46px;padding:8px;border-radius:8px;background:rgba(0,0,0,0.08);color:var(--text);outline:none}
+  .box .actions{display:flex;gap:8px;margin-top:6px;align-items:center}
+  .small{padding:6px 8px;font-size:13px;border-radius:8px}
+  .remove{position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);padding:6px;border-radius:8px;cursor:pointer;color:var(--muted)}
+  .empty{color:var(--muted);font-size:0.95rem;text-align:center;padding:18px}
+  footer{max-width:1200px;margin:18px auto 0;color:var(--muted);font-size:13px;text-align:center}
+  input[type=file]{display:none}
+  .flex{display:flex;gap:8px;align-items:center}
+  .import-input{display:none}
+  .topbar-left{display:flex;gap:12px;align-items:center}
+  .btn-primary{background:var(--accent);color:#08111a;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+  @media (max-width:520px){ header{flex-direction:column;align-items:flex-start} .controls{width:100%;justify-content:flex-start} }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="topbar-left">
+        <h1>Kho Sơ đồ tư duy — Lưới ô</h1>
+        <div style="color:var(--muted);font-size:13px">Mỗi ô: Ảnh + Ghi chú — Dữ liệu lưu cục bộ</div>
+      </div>
+      <div class="controls">
+        <button id="add-box" class="btn-primary">➕ Thêm ô</button>
+        <button id="export-all" class="ghost">⬇ Xuất (JSON)</button>
+        <label class="ghost" style="cursor:pointer;padding:7px 10px;border-radius:8px">
+          ⬆ Nhập (JSON)
+          <input id="import-file" class="import-input" type="file" accept=".json">
+        </label>
+        <button id="clear-all" class="ghost">🗑 Xóa tất cả</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="grid" class="grid" aria-live="polite"></div>
+      <div id="empty-msg" class="empty" style="display:none">Chưa có ô nào — bấm "Thêm ô" để bắt đầu.</div>
+    </main>
+
+    <footer>
+      Giao diện dựa trên file index gốc bạn gửi. Dữ liệu (ảnh dạng base64) được lưu vào localStorage.
+    </footer>
+  </div>
+
+<script>
+(function(){
+  const KEY = 'mindmap_grid_v1';
+  const grid = document.getElementById('grid');
+  const emptyMsg = document.getElementById('empty-msg');
+
+  function uid(){ return 'id'+Math.random().toString(36).slice(2,9); }
+
+  // Escape html
+  function escapeHtml(s){ 
+    return s.replaceAll('&','&amp;')
+            .replaceAll('<','&lt;')
+            .replaceAll('>','&gt;'); 
+  }
+
+  // Load + Save
+  function load(){
+    try{ return JSON.parse(localStorage.getItem(KEY)) || []; }catch{ return []; }
+  }
+  function localSave(data){ localStorage.setItem(KEY, JSON.stringify(data)); }
+  function save(data){ localSave(data); renderAll(); }
+
+  // Render each box
+  function renderBox(item){
+    const div = document.createElement('div');
+    div.className='box';
+    div.dataset.id = item.id;
+
+    div.innerHTML = `
+      <button class="remove" title="Xóa ô (nhanh)">✖</button>
+      <div class="top">
+        <div class="flex">
+          <label class="filebtn small" style="display:inline-block;cursor:pointer">📁 Chọn ảnh
+            <input type="file" accept="image/*" style="display:none" class="img-input">
+          </label>
+          <div style="font-size:13px;color:var(--muted);padding-left:6px">${item.title || 'Không tên'}</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">${item.date || ''}</div>
+      </div>
+
+      <div class="thumb">
+        ${ item.img ? `<img src="${item.img}" alt="thumb">`
+                     : `<div style="color:var(--muted);padding:8px">Chưa có ảnh</div>` }
+      </div>
+
+      <div contenteditable="true" class="note">${escapeHtml(item.note || '')}</div>
+
+      <div class="actions">
+        <button class="small btn-save">Lưu</button>
+        <button class="small ghost btn-remove-img">Xóa ảnh</button>
+        <button class="small ghost btn-delete-box">Xóa ô</button>
+      </div>
+    `;
+
+    // Elements
+    const removeBtn   = div.querySelector('.remove');
+    const fileInput   = div.querySelector('.img-input');
+    const thumb       = div.querySelector('.thumb');
+    const note        = div.querySelector('.note');
+    const btnSave     = div.querySelector('.btn-save');
+    const btnRemoveImg= div.querySelector('.btn-remove-img');
+    const btnDeleteBox= div.querySelector('.btn-delete-box');
+
+    // Remove box (fast)
+    removeBtn.onclick = () => {
+      if(!confirm('Xóa ô này?')) return;
+      const data = load();
+      const idx = data.findIndex(x=>x.id===item.id);
+      if(idx>-1){ data.splice(idx,1); save(data); toast('Đã xóa ô'); }
+    };
+
+    // Remove box (action row)
+    btnDeleteBox.onclick = () => {
+      if(!confirm('Xóa ô này?')) return;
+      const data = load();
+      const idx = data.findIndex(x=>x.id===item.id);
+      if(idx>-1){ data.splice(idx,1); save(data); toast('Đã xóa ô'); }
+    };
+
+    // Upload image
+    fileInput.onchange = () => {
+      const f = fileInput.files[0];
+      if(!f) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        item.img = e.target.result;
+        thumb.innerHTML = `<img src="${item.img}" alt="thumb">`;
+
+        const data = load();
+        const idx = data.findIndex(x=>x.id===item.id);
+        if(idx>-1){ data[idx]=item; localSave(data); toast('Đã lưu ảnh'); }
+      };
+      reader.readAsDataURL(f);
+    };
+
+    // Remove image
+    btnRemoveImg.onclick = () => {
+      if(!item.img) return;
+      if(!confirm('Xóa ảnh?')) return;
+      item.img = null;
+      thumb.innerHTML = `<div style="color:var(--muted);padding:8px">Chưa có ảnh</div>`;
+      const data = load();
+      const idx = data.findIndex(x=>x.id===item.id);
+      if(idx>-1){ data[idx]=item; localSave(data); toast('Ảnh đã xóa'); }
+    };
+
+    // Save
+    btnSave.onclick = () => {
+      item.note = note.innerText.trim();
+      item.date = new Date().toISOString().slice(0,10);
+      const data = load();
+      const idx = data.findIndex(x=>x.id===item.id);
+      if(idx>-1) data[idx]=item; else data.push(item);
+      save(data);
+      toast('Đã lưu');
+    };
+
+    // Auto-save on blur
+    note.addEventListener('blur', ()=>{
+      item.note = note.innerText.trim();
+      const data = load();
+      const idx = data.findIndex(x=>x.id===item.id);
+      if(idx>-1){ data[idx]=item; localSave(data); }
+    });
+
+    return div;
+  }
+
+  // Render all
+  function renderAll(){
+    grid.innerHTML='';
+    const data = load();
+    emptyMsg.style.display = data.length ? 'none':'block';
+    data.forEach(item => grid.appendChild(renderBox(item)));
+  }
+
+  // Add box
+  document.getElementById('add-box').onclick = ()=>{
+    const data = load();
+    const item = {
+      id: uid(),
+      title: "Sơ đồ " + (data.length+1),
+      note: "",
+      img: null,
+      date: new Date().toISOString().slice(0,10)
+    };
+    data.unshift(item);
+    save(data);
+    toast('Đã thêm ô');
+  };
+
+  // Clear all
+  document.getElementById('clear-all').onclick = ()=>{
+    if(!confirm('Xóa toàn bộ ô?')) return;
+    localStorage.removeItem(KEY);
+    renderAll();
+    toast('Đã xóa toàn bộ');
+  };
+
+  // Export
+  document.getElementById('export-all').onclick = ()=>{
+    const data = load();
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'mindmap_grid_export.json';
+    a.click();
+  };
+
+  // Import
+  document.getElementById('import-file').onchange = e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = ev=>{
+      try{
+        const parsed = JSON.parse(ev.target.result);
+        if(!Array.isArray(parsed)) throw new Error("File JSON không hợp lệ");
+        localSave(parsed);
+        renderAll();
+        toast('Đã nhập dữ liệu');
+      }catch(err){
+        alert('Import lỗi: ' + err.message);
+      }
+    };
+    r.readAsText(f);
+    e.target.value = "";
+  };
+
+  // Toast
+  function toast(t){
+    const el = document.createElement('div');
+    el.style.position='fixed';
+    el.style.right='16px';
+    el.style.top='16px';
+    el.style.background='#13202b';
+    el.style.color='var(--text)';
+    el.style.padding='10px 14px';
+    el.style.borderRadius='10px';
+    el.style.boxShadow='0 6px 16px rgba(0,0,0,0.6)';
+    el.style.zIndex=9999;
+    el.className='__toast';
+    el.innerText = t;
+    document.body.appendChild(el);
+    setTimeout(()=>{ el.remove(); }, 2600);
+  }
+
+  // Init
+  renderAll();
+
+})();
+// ------------------ Chức năng chuyển trang đồng nhất ------------------
+
+// Hàm mới để xử lý chuyển trang có hiệu ứng
+function navigate(url) {
+  // 1. Kích hoạt hiệu ứng fade-out/overlay (400ms)
+  document.body.classList.add('is-leaving');
+  
+  // 2. Chờ 400ms (phải khớp với CSS transition) rồi chuyển trang
+  setTimeout(() => {
+    window.location.href = url;
+  }, 400); 
+}
+
+// Xử lý hiệu ứng Fade In khi trang MỚI TẢI XONG
+document.addEventListener('DOMContentLoaded', () => {
+  // Đảm bảo lớp phủ chuyển trang biến mất (Fade In)
+  document.body.classList.remove('is-leaving');
+});
+
+// ---------------------------------------------------------------------
+</script>
+<!-- Nút quay lại trang chính -->
+<div style="margin-top:30px;">
+    <button class="btn" onclick="window.location.href='index.html'">
+      ← Quay lại trang chính
+    </button>
+</body>
+</html>

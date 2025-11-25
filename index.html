@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Góc học tập của tôi</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1726;
+    --card: #1a2333;
+    --accent1: #ff9f43; /* Màu cam, dùng cho button pop-up/nhấn mạnh */
+    --accent2: #00b4d8; /* Màu xanh, dùng cho tiêu đề/liên kết */
+    --text: #e6eef8;
+    --muted: #b7c8e1;
+    
+    /* Variables từ widget nhắc nhở gốc, đổi tên để tránh trùng */
+    --rem-accent: #f39c12; 
+    --rem-accent2: #3498db; 
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  section {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    transform: translateY(20px);
+    padding: 20px;
+  }
+  section.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  header { margin-bottom: 25px; text-align: center; }
+  header h1 { color: var(--accent2); font-size: 2.5rem; margin-bottom: 5px;}
+  .card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .card {
+    background: var(--card);
+    padding: 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  }
+  .card:hover { transform: scale(1.02); background: #253143; }
+  .icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .card h2 { color: var(--accent1); font-size: 1.4rem; margin-bottom: 5px; }
+  .card p { color: var(--muted); font-size: 0.9rem; }
+  .back-btn {
+    display: block;
+    margin: 30px auto 0;
+    width: max-content;
+    padding: 10px 20px;
+    background: var(--accent1);
+    color: var(--bg);
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.3s;
+  }
+  .back-btn:hover { opacity: 0.9; }
+
+  /* --- CSS cho Chuyển đổi Trang (Đồng nhất) --- */
+  #page-transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg, #0e1726);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 9999;
+    transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
+  }
+  body.is-leaving #page-transition-overlay {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* --- CSS cho Mindmap --- */
+  .filebtn {
+      background: var(--accent2); /* Màu xanh */
+      border: none;
+      color: var(--bg);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-block;
+  }
+  #mindmapList {
+      display: grid;
+      gap: 15px;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 10px;
+      text-align: left;
+  }
+  .mindmap-card {
+    background: var(--card); 
+    padding: 16px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: 0.3s;
+  }
+  .mindmap-card:hover {
+    box-shadow: 0 0 0 2px var(--accent1);
+  }
+</style>
+</head>
+<body>
+
+<section id="home" class="active">
+  <header>
+    <h1>👋 Trang chủ Góc học tập</h1>
+    <p>Chọn khu vực bạn muốn truy cập.</p>
+  </header>
+  <div class="card-container">
+    <div class="card" onclick="showSection('study')">
+      <div class="icon">📚</div>
+      <h2>Góc học tập</h2>
+      <p>Tài liệu học, bài tập trắc nghiệm các môn</p>
+    </div>
+    <div class="card" onclick="showSection('relax')">
+      <div class="icon">🎧</div>
+      <h2>Góc thư giãn</h2>
+      <p>Trò chơi và trình phát nhạc</p>
+    </div>
+  </div>
+</section>
+
+<section id="study">
+  <header>
+    <h1>📚 Góc học tập</h1>
+    <p>Chọn môn học lớp 11 bạn muốn ôn luyện.</p>
+  </header>
+  <div class="card-container">
+    <div class="card" onclick="navigate('toan11.html')">
+      <div class="icon">📐</div>
+      <h2>Toán học 11</h2>
+      <p>Đại số & Hình học</p>
+    </div>
+    <div class="card" onclick="navigate('ly11.html')">
+      <div class="icon">⚛️</div>
+      <h2>Vật Lý 11</h2>
+      <p>Luyện tập trắc nghiệm và xem lại kiến thức</p>
+    </div>
+    <div class="card" onclick="navigate('hoa11.html')">
+      <div class="icon">🧪</div>
+      <h2>Hóa học 11</h2>
+      <p>Chương trình Hóa học hữu cơ và vô cơ</p>
+    </div>
+    <div class="card" onclick="navigate('van11.html')">
+      <div class="icon">📖</div>
+      <h2>Ngữ Văn 11</h2>
+      <p>Tác phẩm, luyện tập và lưu trữ tài liệu</p>
+    </div>
+    <div class="card" onclick="navigate('tienganh11.html')">
+      <div class="icon">🇬🇧</div>
+      <h2>Tiếng Anh 11</h2>
+      <p>Ngữ pháp, từ vựng và bài đọc</p>
+    </div>
+    <div class="card" onclick="window.open('https://classroom.google.com', '_blank')">
+      <div class="icon">🧑‍🏫</div>
+      <h2>Google Classroom</h2>
+      <p>Kết nối lớp học và giáo viên dễ dàng</p>
+    </div>
+    <div class="card" onclick="navigate('mindmap_grid.html')">
+      <div class="icon">🧠</div>
+      <h2>Sơ đồ Tư duy</h2>
+      <p>Lưu trữ các sơ đồ, tài liệu và ghi chú</p>
+    </div>
+   
+  </div>
+  
+  <a href="#" class="back-btn" onclick="showSection('home')">← Quay lại trang chủ</a>
+</section>
+  
+<section id="relax">
+  <header>
+    <h1>🎧 Góc thư giãn</h1>
+    <p>Nghe nhạc và trò chơi học tập.</p>
+  </header>
+  <div class="card-container">
+    <div class="card" onclick="navigate('trochoi.html')">
+       <div class="icon">🎮</div>
+       <h2>Trò chơi học tập</h2>
+       <p>Chơi Snake Quiz để ôn lại kiến thức lớp 11</p>
+    </div>
+    <div class="card" onclick="navigate('nhac.html')">
+       <div class="icon">🎵</div>
+       <h2>Nghe nhạc thư giãn</h2>
+       <p>Mở trình phát nhạc để nghe MP3 yêu thích</p>
+    </div>
+   
+  </div>
+  <a href="#" class="back-btn" onclick="showSection('home')">← Quay lại trang chủ</a>
+</section>
+
+<section id="mindmap">
+  <header>
+    <h1>🧠 Sơ đồ Tư duy & Ghi chú</h1>
+    <p>Lưu trữ ảnh, PDF và tạo các ô ghi chú (lưu cục bộ trên trình duyệt).</p>
+  </header>
+  
+  <div class="controls" style="max-width: 800px; margin: 20px auto; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+    <label class="filebtn">
+        Tải sơ đồ mới (.jpg, .png, .pdf, v.v.)
+        <input type="file" id="mindmapInput" style="display: none;" accept="image/*, application/pdf" multiple>
+    </label>
+    <button class="filebtn" onclick="createMindmapNote()" style="background: var(--accent1); color: var(--bg);">➕ Tạo Ghi chú/Ô mới</button>
+    <button class="ghost" id="mindmapClearAllBtn" style="color: #e74c3c; border: 1px solid #e74c3c; background: transparent; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Xóa toàn bộ</button>
+  </div>
+
+  <div id="mindmapList">
+    </div>
+
+  <a href="#" class="back-btn" onclick="showSection('home')">← Quay lại trang chủ</a>
+</section>
+<div id="page-transition-overlay"></div>
+
+<script>
+  // ------------------ CHỨC NĂNG CHUYỂN ĐỔI SECTION NỘI BỘ (ĐÃ SỬA ĐỔI) ------------------
+  
+  // Hàm hiển thị section, đã tích hợp logic Mindmap
+  function showSection(id) {
+    // 1. Hook: Nếu là Mindmap, gọi hàm render dữ liệu
+    if (id === 'mindmap') {
+        renderMindmapList();
+    }
+    
+    // 2. Logic chuyển đổi mượt mà (Fade/Slide)
+    document.querySelectorAll('section').forEach(s => {
+      s.classList.remove('active');
+      s.style.opacity = 0;
+      s.style.transform = 'translateY(20px)';
+    });
+    const target = document.getElementById(id);
+    if (target) {
+      target.style.transform = 'translateY(0)';
+      target.classList.add('active');
+      // Timeout nhỏ để đảm bảo transition hoạt động
+      setTimeout(() => { target.style.opacity = 1; }, 10);
+    }
+  }
+  
+  // Khởi chạy mặc định
+  showSection('home');
+
+
+  // ------------------ CHỨC NĂNG CHUYỂN ĐỔI TRANG BÊN NGOÀI (ĐỒNG NHẤT) ------------------
+
+  // Hàm mới để xử lý chuyển trang có hiệu ứng (Fade Out)
+  function navigate(url) {
+    // 1. Kích hoạt hiệu ứng fade-out/overlay (400ms)
+    document.body.classList.add('is-leaving');
+    
+    // 2. Chờ 400ms rồi chuyển trang
+    setTimeout(() => {
+      window.location.href = url;
+    }, 400); 
+  }
+
+  // Xử lý hiệu ứng Fade In khi trang MỚI TẢI XONG
+  document.addEventListener('DOMContentLoaded', () => {
+    // Đảm bảo lớp phủ chuyển trang biến mất (Fade In)
+    document.body.classList.remove('is-leaving');
+  });
+
+  // ------------------ LOGIC SƠ ĐỒ TƯ DUY & GHI CHÚ (ĐÃ CẬP NHẬT) ------------------
+
+  const MINDMAP_KEY = 'mindmap_files_v2'; // Dùng key mới để tránh xung đột
+  let mindmapFiles = JSON.parse(localStorage.getItem(MINDMAP_KEY) || '[]');
+
+  // 1. Hàm tạo Ghi chú mới
+  window.createMindmapNote = function() {
+      const title = prompt("Nhập tiêu đề cho ô ghi chú mới:");
+      if (!title || title.trim() === "") return;
+
+      mindmapFiles.push({
+          type: 'note',
+          name: title.trim(),
+          text: "Nhấp vào nút 'Sửa' để thêm nội dung ghi chú...",
+          timestamp: Date.now()
+      });
+      localStorage.setItem(MINDMAP_KEY, JSON.stringify(mindmapFiles));
+      renderMindmapList();
+  }
+
+  // 2. Hàm chỉnh sửa Ghi chú
+  window.editMindmapNote = function(index) {
+      const currentNote = mindmapFiles[index];
+      if (currentNote.type !== 'note') return;
+
+      const newText = prompt(`Chỉnh sửa nội dung ghi chú:`, currentNote.text);
+
+      if (newText !== null) { // Kiểm tra nếu người dùng không bấm Cancel
+          const newTitle = prompt("Chỉnh sửa tiêu đề:", currentNote.name);
+          if (newTitle === null) return; 
+
+          currentNote.name = newTitle.trim() || currentNote.name;
+          currentNote.text = newText;
+          localStorage.setItem(MINDMAP_KEY, JSON.stringify(mindmapFiles));
+          renderMindmapList();
+      }
+  }
+
+  // 3. Hàm hiển thị danh sách sơ đồ tư duy (ĐÃ SỬA ĐỔI)
+  function renderMindmapList() {
+      const listEl = document.getElementById('mindmapList');
+      if (!listEl) return; 
+
+      listEl.innerHTML = '';
+      
+      // Đảo ngược array để hiển thị mới nhất trước
+      mindmapFiles.slice().reverse().forEach((f) => {
+          // Tìm index gốc để xóa/sửa chính xác
+          const originalIndex = mindmapFiles.findIndex(item => item.timestamp === f.timestamp);
+          
+          let cardContent = '';
+          let controls = '';
+          let icon = '';
+
+          if (f.type === 'file') {
+              icon = '🖼️ ';
+              cardContent = `
+                  <p style="font-size: 0.9em; color: var(--muted); margin-bottom: 10px;">Kích thước: ${Math.round(f.size / 1024)} KB</p>
+              `;
+              controls = `
+                  <button class='btn' onclick="window.open('${f.url}', '_blank')" style="background: var(--accent1); color: var(--bg);">Xem</button>
+              `;
+          } else if (f.type === 'note') {
+              icon = '📝 ';
+              cardContent = `
+                  <p style="font-size: 0.9em; color: var(--muted); margin-bottom: 10px; min-height: 40px; overflow: hidden; text-overflow: ellipsis;">${f.text}</p>
+              `;
+              controls = `
+                  <button class='btn' onclick='editMindmapNote(${originalIndex})' style="background: var(--accent1); color: var(--bg);">📝 Sửa</button>
+              `;
+          }
+          
+          const cardHtml = `
+              <div class="mindmap-card">
+                  <strong style="display: block; margin-bottom: 10px; color: var(--accent2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                      ${icon}${f.name}
+                  </strong> 
+                  ${cardContent}
+                  <div style='display: flex; gap: 10px; justify-content: flex-start;'>
+                      ${controls}
+                      <button class='ghost' onclick='deleteMindmapFile(${originalIndex})'>Xóa</button>
+                  </div>
+              </div>
+          `;
+          listEl.innerHTML += cardHtml;
+      });
+
+      if(mindmapFiles.length === 0) {
+          listEl.innerHTML = `<p style="text-align: center; color: var(--muted); grid-column: 1 / -1;">Chưa có sơ đồ tư duy/ghi chú nào được lưu trữ. Hãy tải lên hoặc tạo mới!</p>`;
+      }
+  }
+
+  // 4. Hàm xóa mục (ĐÃ SỬA ĐỔI để xử lý cả note và file)
+  window.deleteMindmapFile = function(index) {
+      if (!confirm("Bạn có chắc chắn muốn xóa mục này?")) return;
+      
+      // Giải phóng bộ nhớ của Blob URL nếu là file
+      if (mindmapFiles[index] && mindmapFiles[index].type === 'file' && mindmapFiles[index].url.startsWith('blob:')) {
+          URL.revokeObjectURL(mindmapFiles[index].url);
+      }
+      
+      mindmapFiles.splice(index, 1);
+      localStorage.setItem(MINDMAP_KEY, JSON.stringify(mindmapFiles));
+      renderMindmapList();
+  }
+
+
+  // 5. Bắt sự kiện tải file (ĐÃ SỬA ĐỔI để thêm type: 'file')
+  document.addEventListener('DOMContentLoaded', () => {
+      const inputEl = document.getElementById("mindmapInput");
+      const clearBtn = document.getElementById("mindmapClearAllBtn");
+
+      if(inputEl) {
+          inputEl.addEventListener("change", (e) => {
+              const newFiles = [...e.target.files];
+              
+              newFiles.forEach(f => {
+                  const url = URL.createObjectURL(f);
+                  mindmapFiles.push({
+                      type: 'file', // Thêm type để phân biệt với ghi chú
+                      name: f.name,
+                      size: f.size,
+                      url: url,
+                      timestamp: Date.now()
+                  });
+              });
+              
+              localStorage.setItem(MINDMAP_KEY, JSON.stringify(mindmapFiles));
+              renderMindmapList();
+              e.target.value = null; 
+          });
+      }
+
+      if(clearBtn) {
+          clearBtn.addEventListener("click", () => {
+              if (confirm("Xóa toàn bộ sơ đồ tư duy/ghi chú đã lưu? Hành động này không thể hoàn tác.")) {
+                  mindmapFiles.forEach(f => {
+                      if (f.type === 'file' && f.url.startsWith('blob:')) {
+                          URL.revokeObjectURL(f.url);
+                      }
+                  });
+                  
+                  localStorage.removeItem(MINDMAP_KEY);
+                  mindmapFiles = [];
+                  renderMindmapList();
+              }
+          });
+      }
+  });
+
+</script>
+
+</body>
+</html>

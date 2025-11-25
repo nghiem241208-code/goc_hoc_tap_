@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎵 Góc âm nhạc của tôi</title>
+  <style>
+    body {
+      background-color: #0e1726;
+      color: #ffffff;
+      font-family: "Segoe UI", sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #4fc3f7;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      width: 70%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      background-color: #1b2a3d;
+      color: white;
+      font-size: 16px;
+    }
+
+    .btn {
+      background-color: #2a9d8f;
+      border: none;
+      color: white;
+      padding: 9px 14px;
+      border-radius: 8px;
+      margin-left: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      background-color: #219080;
+    }
+
+    .song-item {
+      background-color: #13202b;
+      border-radius: 12px;
+      padding: 10px;
+      width: 90%;
+      max-width: 500px;
+      margin: 10px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    iframe, audio {
+      margin-top: 20px;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 10px;
+      background-color: #13202b;
+    }
+
+    #now-playing {
+      margin-top: 15px;
+      font-style: italic;
+      color: #80cbc4;
+    }
+
+    .nav-buttons {
+      margin-top: 40px;
+    }
+
+    .nav-buttons .btn {
+      margin: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🎧 Góc âm nhạc của tôi</h1>
+
+  <div>
+    <input type="text" id="music-link" placeholder="Dán link YouTube hoặc MP3 tại đây...">
+    <button class="btn" onclick="addSong()">Thêm</button>
+  </div>
+
+  <div id="music-list">
+    <p style="color:#ccc;">Chưa có bài nhạc nào 🎶</p>
+  </div>
+
+  <p id="now-playing">🎶 Chưa phát bài nào</p>
+  <div id="player"></div>
+
+  <div class="nav-buttons">
+    <button class="btn" onclick="window.location.href='index.html'">← Quay lại trang chính</button>
+    <button class="btn" onclick="window.location.href='index.html#relax'">← Quay lại Góc thư giãn</button>
+  </div>
+
+  <script>
+    const songs = [];
+
+    function addSong() {
+      const link = document.getElementById("music-link").value.trim();
+      if (!link) return alert("⚠️ Vui lòng nhập link nhạc!");
+      const name = prompt("🎵 Nhập tên bài hát:", "Bài hát mới");
+      if (!name) return;
+      songs.push({ name, link });
+      document.getElementById("music-link").value = "";
+      renderList();
+    }
+
+    function renderList() {
+      const list = document.getElementById("music-list");
+      list.innerHTML = "";
+      if (!songs.length) {
+        list.innerHTML = "<p style='color:#ccc;'>Chưa có bài nhạc nào 🎶</p>";
+        return;
+      }
+      songs.forEach((song, i) => {
+        const div = document.createElement("div");
+        div.className = "song-item";
+        div.innerHTML = `
+          <span>🎵 ${song.name}</span>
+          <div>
+            <button class="btn" onclick="play(${i})">▶️</button>
+            <button class="btn" onclick="remove(${i})">🗑️</button>
+          </div>`;
+        list.appendChild(div);
+      });
+    }
+
+    function play(index) {
+      const song = songs[index];
+      const player = document.getElementById("player");
+      const now = document.getElementById("now-playing");
+      now.textContent = "🎶 Đang phát: " + song.name;
+
+      // Phát YouTube
+      if (song.link.includes("youtube.com") || song.link.includes("youtu.be")) {
+        let vid = song.link;
+        if (vid.includes("v=")) vid = vid.split("v=")[1].split("&")[0];
+        if (vid.includes("youtu.be/")) vid = vid.split("youtu.be/")[1];
+        player.innerHTML = `
+          <iframe src="https://www.youtube.com/embed/${vid}" 
+                  frameborder="0" 
+                  allow="autoplay; encrypted-media" 
+                  allowfullscreen>
+          </iframe>`;
+      }
+
+      // Phát file nhạc trực tiếp (MP3/WAV/OGG)
+      else if (song.link.endsWith(".mp3") || song.link.endsWith(".wav") || song.link.endsWith(".ogg")) {
+        player.innerHTML = `
+          <audio controls autoplay>
+            <source src="${song.link}">
+            Trình duyệt của bạn không hỗ trợ phát nhạc.
+          </audio>`;
+      }
+
+      // Nếu link không hợp lệ
+      else {
+        player.innerHTML = `<p style="color:#f66;">⚠️ Link này không được hỗ trợ.</p>`;
+      }
+    }
+
+    function remove(index) {
+      songs.splice(index, 1);
+      renderList();
+      document.getElementById("player").innerHTML = "";
+      document.getElementById("now-playing").textContent = "🗑️ Đã xóa bài hát.";
+    }
+  </script>
+</body>
+</html>
