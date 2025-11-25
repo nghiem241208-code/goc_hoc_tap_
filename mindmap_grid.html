@@ -26,7 +26,7 @@
   .thumb{height:120px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);display:flex;align-items:center;justify-content:center;overflow:hidden}
   .thumb img{max-width:100%;max-height:100%;object-fit:contain}
   .note{flex:1;min-height:46px;padding:8px;border-radius:8px;background:rgba(0,0,0,0.08);color:var(--text);outline:none}
-  .box .actions{display:flex;gap:8px;margin-top:6px;align-items:center}
+  .box .actions{display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap: wrap;}
   .small{padding:6px 8px;font-size:13px;border-radius:8px}
   .remove{position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);padding:6px;border-radius:8px;cursor:pointer;color:var(--muted)}
   .empty{color:var(--muted);font-size:0.95rem;text-align:center;padding:18px}
@@ -43,14 +43,14 @@
   <div class="container">
     <header>
       <div class="topbar-left">
-        <h1>Kho Sơ đồ tư duy </h1>
+        <h1>Kho Sơ đồ tư duy — </h1>
         <div style="color:var(--muted);font-size:13px">Mỗi ô: Ảnh + Ghi chú </div>
       </div>
       <div class="controls">
         <button id="add-box" class="btn-primary">➕ Thêm ô</button>
-        <button id="export-all" class="ghost">⬇ Xuất</button>
+        <button id="export-all" class="ghost">⬇ Xuất </button>
         <label class="ghost" style="cursor:pointer;padding:7px 10px;border-radius:8px">
-          ⬆ Nhập
+          ⬆ Nhập 
           <input id="import-file" class="import-input" type="file" accept=".json">
         </label>
         <button id="clear-all" class="ghost">🗑 Xóa tất cả</button>
@@ -63,6 +63,7 @@
     </main>
 
     <footer>
+     
     </footer>
   </div>
 
@@ -79,6 +80,22 @@
     return s.replaceAll('&','&amp;')
             .replaceAll('<','&lt;')
             .replaceAll('>','&gt;'); 
+  }
+  
+  // Hàm mới: Chuyển đổi Base64 thành Blob để tạo Object URL ngắn (khắc phục lỗi URL dài)
+  function base64ToBlob(base64) {
+    const parts = base64.split(';base64,');
+    if (parts.length < 2) throw new Error("Dữ liệu Base64 không hợp lệ.");
+
+    const contentType = parts[0].split(':')[1];
+    const raw = window.atob(parts[1]);
+    const rawLength = raw.length;
+    const uInt8Array = new Uint8Array(rawLength);
+
+    for (let i = 0; i < rawLength; ++i) {
+      uInt8Array[i] = raw.charCodeAt(i);
+    }
+    return new Blob([uInt8Array], { type: contentType });
   }
 
   // Load + Save
@@ -107,14 +124,18 @@
       </div>
 
       <div class="thumb">
-        ${ item.img ? `<img src="${item.img}" alt="thumb">`
-                     : `<div style="color:var(--muted);padding:8px">Chưa có ảnh</div>` }
+        ${ 
+          item.img 
+          ? `<img src="${item.img}" alt="thumb" style="cursor: pointer;" title="Dùng nút 'Mở ảnh' bên dưới để xem.">`
+          : `<div style="color:var(--muted);padding:8px">Chưa có ảnh</div>` 
+        }
       </div>
 
       <div contenteditable="true" class="note">${escapeHtml(item.note || '')}</div>
 
       <div class="actions">
         <button class="small btn-save">Lưu</button>
+        <button class="small ghost btn-open-img">🖼 Mở ảnh</button>
         <button class="small ghost btn-remove-img">Xóa ảnh</button>
         <button class="small ghost btn-delete-box">Xóa ô</button>
       </div>
@@ -126,6 +147,7 @@
     const thumb       = div.querySelector('.thumb');
     const note        = div.querySelector('.note');
     const btnSave     = div.querySelector('.btn-save');
+    const btnOpenImg  = div.querySelector('.btn-open-img');
     const btnRemoveImg= div.querySelector('.btn-remove-img');
     const btnDeleteBox= div.querySelector('.btn-delete-box');
 
@@ -152,13 +174,40 @@
       const reader = new FileReader();
       reader.onload = e => {
         item.img = e.target.result;
-        thumb.innerHTML = `<img src="${item.img}" alt="thumb">`;
+        
+        // Cập nhật lại HTML của thumbnail sau khi tải ảnh
+        thumb.innerHTML = 
+          `<img src="${item.img}" alt="thumb" style="cursor: pointer;" title="Dùng nút 'Mở ảnh' bên dưới để xem.">`;
 
         const data = load();
         const idx = data.findIndex(x=>x.id===item.id);
         if(idx>-1){ data[idx]=item; localSave(data); toast('Đã lưu ảnh'); }
       };
       reader.readAsDataURL(f);
+    };
+    
+    // LOGIC MỚI: Mở ảnh trong tab mới bằng Object URL
+    btnOpenImg.onclick = () => {
+      if(!item.img) { toast('Không có ảnh để mở.'); return; }
+      
+      try {
+        // 1. Convert Base64 sang Blob
+        const blob = base64ToBlob(item.img);
+        
+        // 2. Tạo Object URL ngắn gọn
+        const url = URL.createObjectURL(blob);
+        
+        // 3. Mở Object URL trong tab mới
+        window.open(url, '_blank');
+        
+        // 4. Dọn dẹp (Giải phóng bộ nhớ sau 1s)
+        setTimeout(() => { URL.revokeObjectURL(url); }, 1000); 
+
+        toast('Đã mở ảnh trong Tab mới. (Sử dụng Object URL)');
+      } catch (e) {
+        toast('❌ Lỗi mở ảnh: Dữ liệu Base64 bị hỏng hoặc quá lớn.');
+        console.error("Lỗi khi mở ảnh Base64:", e);
+      }
     };
 
     // Remove image
@@ -243,7 +292,7 @@
     r.onload = ev=>{
       try{
         const parsed = JSON.parse(ev.target.result);
-        if(!Array.isArray(parsed)) throw new Error("File không hợp lệ");
+        if(!Array.isArray(parsed)) throw new Error("File JSON không hợp lệ");
         localSave(parsed);
         renderAll();
         toast('Đã nhập dữ liệu');
@@ -273,86 +322,35 @@
     setTimeout(()=>{ el.remove(); }, 2600);
   }
 
-  // --- HIỂN THỊ TẤT CẢ ---
-  function renderAll() {
-    const data = localLoad();
-    grid.innerHTML = ""; // Xóa nội dung cũ
+  // Init
+  renderAll();
 
-    if (data.length === 0) {
-      grid.innerHTML =
-        "<p style='color:var(--muted); margin-top: 30px;'>📂 Chưa có sơ đồ/file nào được lưu.</p>";
-      return;
-    }
+})();
+// ------------------ Chức năng chuyển trang đồng nhất ------------------
 
-    data.forEach((item, i) => {
-      const el = document.createElement("div");
-      el.className = `grid-item ${item.type}`;
-      
-      // Thêm sự kiện click: Mở file trong Tab mới khi nhấp vào ô
-      if (item.type === 'file') {
-        el.onclick = () => openFile(i); // Hàm mở file trong tab mới
-      } else if (item.type === 'note') {
-        el.onclick = () => editNote(i); // Vẫn giữ chức năng Sửa Note khi click
-      }
-      
-      let contentHTML = "";
-      if (item.type === "file") {
-        const fileIcon = item.url.match(/\.(pdf|jpe?g|png|gif|html)/i)
-          ? item.url.match(/\.(pdf|jpe?g|png|gif|html)/i)[1].toUpperCase()
-          : "FILE";
-        contentHTML = `
-          <div class="icon-big file-icon">
-            <span style="font-size:1.2rem; font-weight:600;">${fileIcon}</span>
-          </div>
-          <div class="title">${item.title}</div>
-          <p class="muted-text">${item.name}</p>
-        `;
-      } else if (item.type === "note") {
-        contentHTML = `
-          <div class="icon-big">📝</div>
-          <div class="title">${item.title}</div>
-          <p class="muted-text note-snippet">${item.content.substring(0, 70)}...</p>
-        `;
-      }
+// Hàm mới để xử lý chuyển trang có hiệu ứng
+function navigate(url) {
+  // 1. Kích hoạt hiệu ứng fade-out/overlay (400ms)
+  document.body.classList.add('is-leaving');
+  
+  // 2. Chờ 400ms (phải khớp với CSS transition) rồi chuyển trang
+  setTimeout(() => {
+    window.location.href = url;
+  }, 400); 
+}
 
-      // Thêm nút Xóa
-      contentHTML += `<button class="delete-btn" onclick="deleteItem(event, ${i})">Xóa</button>`;
-      
-      el.innerHTML = contentHTML;
-      grid.appendChild(el);
-    });
-  }
+// Xử lý hiệu ứng Fade In khi trang MỚI TẢI XONG
+document.addEventListener('DOMContentLoaded', () => {
+  // Đảm bảo lớp phủ chuyển trang biến mất (Fade In)
+  document.body.classList.remove('is-leaving');
+});
 
-  // --- HÀM MỚI: MỞ FILE TRONG TAB MỚI ---
-  function openFile(i) {
-    const data = localLoad();
-    const item = data[i];
-    if (item && item.type === 'file' && item.url) {
-        // Mở URL của file trong tab mới
-        window.open(item.url, '_blank');
-        toast(`Đang mở: ${item.title}`);
-    } else {
-        toast('Không thể mở file này.');
-    }
-  }
-
-  // Cần sửa lại hàm deleteItem để ngăn click lan truyền
-  function deleteItem(event, i) {
-    // Ngăn sự kiện click lan truyền lên phần tử cha (grid-item)
-    event.stopPropagation(); 
-    if (confirm(`Bạn có chắc chắn muốn xóa "${localLoad()[i].title}"?`)) {
-      deleteData(i);
-      renderAll();
-      toast("Đã xóa mục!");
-    }
-  }
-
-  // --- Cập nhật các hàm đã có (ví dụ: deleteData, localLoad, localSave) vẫn giữ nguyên ---
+// ---------------------------------------------------------------------
 </script>
-<!-- Nút quay lại trang chính -->
 <div style="margin-top:30px;">
     <button class="btn" onclick="window.location.href='index.html'">
-      ← Quay lại trang chính
+      ← Quay lại Góc học tập
     </button>
+</div>
 </body>
 </html>
