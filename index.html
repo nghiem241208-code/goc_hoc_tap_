@@ -181,6 +181,11 @@
       <h2>Google Classroom</h2>
       <p>Kết nối lớp học và giáo viên dễ dàng</p>
     </div>
+    <div class="card" onclick="showSection('links')">
+      <div class="icon">🌐</div>
+      <h2>Liên kết</h2>
+      <p>Truy cập nhanh các trang web học tập hữu ích</p>
+    </div>
     <div class="card" onclick="navigate('mindmap_grid.html')">
       <div class="icon">🧠</div>
       <h2>Sơ đồ Tư duy</h2>
@@ -211,6 +216,42 @@
    
   </div>
   <a href="#" class="back-btn" onclick="showSection('home')">← Quay lại trang chủ</a>
+</section>
+<section id="links">
+  <header>
+    <h1>🌐 Liên kết học tập</h1>
+    <p>Chọn trang web bạn muốn truy cập</p>
+  </header>
+
+  <div class="card-container">
+    <div class="card" onclick="window.open('https://hocmai.vn', '_blank')">
+      <div class="icon">📘</div>
+      <h2>HOCMAI</h2>
+      <p>Nền tảng học trực tuyến phổ biến</p>
+    </div>
+    <div class="card" onclick="window.open('https://azota.vn', '_blank')">
+      <div class="icon">🧾</div>
+      <h2>Azota</h2>
+      <p>Nộp bài, làm bài kiểm tra trực tuyến</p>
+    </div>
+    <div class="card" onclick="window.open('https://vietjack.com', '_blank')">
+      <div class="icon">📚</div>
+      <h2>VietJack</h2>
+      <p>Tổng hợp bài giảng và lời giải SGK</p>
+    </div>
+    <div class="card" onclick="window.open('https://quizizz.com', '_blank')">
+      <div class="icon">🎮</div>
+      <h2>Quizizz</h2>
+      <p>Làm trắc nghiệm và trò chơi học tập</p>
+    </div>
+    <div class="card" onclick="window.open('https://classroom.google.com', '_blank')">
+      <div class="icon">🧑‍🏫</div>
+      <h2>Google Classroom</h2>
+      <p>Kết nối lớp học và giáo viên dễ dàng</p>
+    </div>
+  </div>
+
+  <a href="#" class="back-btn" onclick="showSection('study')">← Quay lại Góc học tập</a>
 </section>
 
 <section id="mindmap">
@@ -434,6 +475,7 @@
   });
 
 </script>
+
 
 </body>
 </html>
