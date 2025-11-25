@@ -19,10 +19,26 @@
       margin-bottom: 20px;
     }
 
+    /* Đã sửa đổi CSS cho khu vực nhập liệu */
+    .input-area {
+      max-width: 600px;
+      margin: 0 auto 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .input-row {
+        display: flex;
+        width: 100%;
+        gap: 6px;
+    }
+
     input[type="text"] {
-      width: 70%;
+      width: 100%;
       padding: 10px;
-      border-radius: 10px;
+      border-radius: 8px; /* Giảm bo tròn */
       border: none;
       outline: none;
       background-color: #1b2a3d;
@@ -36,14 +52,21 @@
       color: white;
       padding: 9px 14px;
       border-radius: 8px;
-      margin-left: 6px;
       cursor: pointer;
       font-weight: 500;
       transition: 0.3s;
+      flex-shrink: 0;
     }
 
     .btn:hover {
       background-color: #219080;
+    }
+    
+    .btn-delete {
+        background-color: #e74c3c;
+    }
+    .btn-delete:hover {
+        background-color: #c0392b;
     }
 
     .song-item {
@@ -58,6 +81,15 @@
       align-items: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
+    
+    .song-item > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 70%;
+        text-align: left;
+        padding-right: 10px;
+    }
 
     iframe, audio {
       margin-top: 20px;
@@ -65,6 +97,7 @@
       max-width: 600px;
       border-radius: 10px;
       background-color: #13202b;
+      height: 340px; /* Thêm chiều cao cho player */
     }
 
     #now-playing {
@@ -86,13 +119,16 @@
 <body>
   <h1>🎧 Góc âm nhạc của tôi</h1>
 
-  <div>
-    <input type="text" id="music-link" placeholder="Dán link YouTube hoặc MP3 tại đây...">
-    <button class="btn" onclick="addSong()">Thêm</button>
+  <div class="input-area">
+    <input type="text" id="music-name" placeholder="Nhập TÊN bài hát (ví dụ: Tên bài YouTube)...">
+    <div class="input-row">
+      <input type="text" id="music-link" placeholder="Dán link YouTube hoặc MP3 tại đây...">
+      <button class="btn" onclick="addSong()">Thêm</button>
+    </div>
   </div>
 
   <div id="music-list">
-    <p style="color:#ccc;">Chưa có bài nhạc nào 🎶</p>
+    <p style="color:#ccc;">Đang tải danh sách...</p>
   </div>
 
   <p id="now-playing">🎶 Chưa phát bài nào</p>
@@ -104,16 +140,40 @@
   </div>
 
   <script>
-    const songs = [];
+    const STORAGE_KEY = 'music_list_saved_data';
+    let songs = []; // Đã đổi từ const sang let
+
+    // --- LOGIC LƯU TRỮ VĨNH VIỄN ---
+    function load() {
+        try {
+            const data = localStorage.getItem(STORAGE_KEY);
+            songs = JSON.parse(data) || [];
+        } catch (e) {
+            console.error("Lỗi khi tải dữ liệu nhạc:", e);
+            songs = [];
+        }
+        renderList();
+    }
+
+    function save() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(songs));
+        renderList(); // Render lại danh sách sau khi lưu
+    }
+    // ------------------------------------
 
     function addSong() {
       const link = document.getElementById("music-link").value.trim();
+      const name = document.getElementById("music-name").value.trim(); // Lấy tên từ input
+      
       if (!link) return alert("⚠️ Vui lòng nhập link nhạc!");
-      const name = prompt("🎵 Nhập tên bài hát:", "Bài hát mới");
-      if (!name) return;
-      songs.push({ name, link });
+      
+      // Thêm bài hát với tên đã nhập (hoặc 'Bài hát mới' nếu trống)
+      songs.push({ name: name || 'Bài hát mới', link });
+      
       document.getElementById("music-link").value = "";
-      renderList();
+      document.getElementById("music-name").value = "";
+      
+      save(); // Lưu dữ liệu vào localStorage
     }
 
     function renderList() {
@@ -127,10 +187,9 @@
         const div = document.createElement("div");
         div.className = "song-item";
         div.innerHTML = `
-          <span>🎵 ${song.name}</span>
-          <div>
+          <span>🎵 ${song.name}</span> <div>
             <button class="btn" onclick="play(${i})">▶️</button>
-            <button class="btn" onclick="remove(${i})">🗑️</button>
+            <button class="btn btn-delete" onclick="remove(${i})">🗑️</button>
           </div>`;
         list.appendChild(div);
       });
@@ -148,7 +207,7 @@
         if (vid.includes("v=")) vid = vid.split("v=")[1].split("&")[0];
         if (vid.includes("youtu.be/")) vid = vid.split("youtu.be/")[1];
         player.innerHTML = `
-          <iframe src="https://www.youtube.com/embed/${vid}" 
+          <iframe src="https://www.youtube.com/embed/${vid}?autoplay=1" 
                   frameborder="0" 
                   allow="autoplay; encrypted-media" 
                   allowfullscreen>
@@ -171,11 +230,18 @@
     }
 
     function remove(index) {
-      songs.splice(index, 1);
-      renderList();
-      document.getElementById("player").innerHTML = "";
-      document.getElementById("now-playing").textContent = "🗑️ Đã xóa bài hát.";
+        if (confirm(`Bạn có chắc muốn xóa bài "${songs[index].name}"?`)) {
+            songs.splice(index, 1);
+            save(); // Lưu dữ liệu sau khi xóa
+            
+            // Xóa player nếu cần
+            document.getElementById("player").innerHTML = "";
+            document.getElementById("now-playing").textContent = "🗑️ Đã xóa bài hát.";
+        }
     }
+    
+    // Tải dữ liệu từ localStorage khi trang được tải lần đầu
+    document.addEventListener('DOMContentLoaded', load);
   </script>
 </body>
 </html>
