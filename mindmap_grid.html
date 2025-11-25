@@ -273,30 +273,81 @@
     setTimeout(()=>{ el.remove(); }, 2600);
   }
 
-  // Init
-  renderAll();
+  // --- HIỂN THỊ TẤT CẢ ---
+  function renderAll() {
+    const data = localLoad();
+    grid.innerHTML = ""; // Xóa nội dung cũ
 
-})();
-// ------------------ Chức năng chuyển trang đồng nhất ------------------
+    if (data.length === 0) {
+      grid.innerHTML =
+        "<p style='color:var(--muted); margin-top: 30px;'>📂 Chưa có sơ đồ/file nào được lưu.</p>";
+      return;
+    }
 
-// Hàm mới để xử lý chuyển trang có hiệu ứng
-function navigate(url) {
-  // 1. Kích hoạt hiệu ứng fade-out/overlay (400ms)
-  document.body.classList.add('is-leaving');
-  
-  // 2. Chờ 400ms (phải khớp với CSS transition) rồi chuyển trang
-  setTimeout(() => {
-    window.location.href = url;
-  }, 400); 
-}
+    data.forEach((item, i) => {
+      const el = document.createElement("div");
+      el.className = `grid-item ${item.type}`;
+      
+      // Thêm sự kiện click: Mở file trong Tab mới khi nhấp vào ô
+      if (item.type === 'file') {
+        el.onclick = () => openFile(i); // Hàm mở file trong tab mới
+      } else if (item.type === 'note') {
+        el.onclick = () => editNote(i); // Vẫn giữ chức năng Sửa Note khi click
+      }
+      
+      let contentHTML = "";
+      if (item.type === "file") {
+        const fileIcon = item.url.match(/\.(pdf|jpe?g|png|gif|html)/i)
+          ? item.url.match(/\.(pdf|jpe?g|png|gif|html)/i)[1].toUpperCase()
+          : "FILE";
+        contentHTML = `
+          <div class="icon-big file-icon">
+            <span style="font-size:1.2rem; font-weight:600;">${fileIcon}</span>
+          </div>
+          <div class="title">${item.title}</div>
+          <p class="muted-text">${item.name}</p>
+        `;
+      } else if (item.type === "note") {
+        contentHTML = `
+          <div class="icon-big">📝</div>
+          <div class="title">${item.title}</div>
+          <p class="muted-text note-snippet">${item.content.substring(0, 70)}...</p>
+        `;
+      }
 
-// Xử lý hiệu ứng Fade In khi trang MỚI TẢI XONG
-document.addEventListener('DOMContentLoaded', () => {
-  // Đảm bảo lớp phủ chuyển trang biến mất (Fade In)
-  document.body.classList.remove('is-leaving');
-});
+      // Thêm nút Xóa
+      contentHTML += `<button class="delete-btn" onclick="deleteItem(event, ${i})">Xóa</button>`;
+      
+      el.innerHTML = contentHTML;
+      grid.appendChild(el);
+    });
+  }
 
-// ---------------------------------------------------------------------
+  // --- HÀM MỚI: MỞ FILE TRONG TAB MỚI ---
+  function openFile(i) {
+    const data = localLoad();
+    const item = data[i];
+    if (item && item.type === 'file' && item.url) {
+        // Mở URL của file trong tab mới
+        window.open(item.url, '_blank');
+        toast(`Đang mở: ${item.title}`);
+    } else {
+        toast('Không thể mở file này.');
+    }
+  }
+
+  // Cần sửa lại hàm deleteItem để ngăn click lan truyền
+  function deleteItem(event, i) {
+    // Ngăn sự kiện click lan truyền lên phần tử cha (grid-item)
+    event.stopPropagation(); 
+    if (confirm(`Bạn có chắc chắn muốn xóa "${localLoad()[i].title}"?`)) {
+      deleteData(i);
+      renderAll();
+      toast("Đã xóa mục!");
+    }
+  }
+
+  // --- Cập nhật các hàm đã có (ví dụ: deleteData, localLoad, localSave) vẫn giữ nguyên ---
 </script>
 <!-- Nút quay lại trang chính -->
 <div style="margin-top:30px;">
